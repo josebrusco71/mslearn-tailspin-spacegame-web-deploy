@@ -11,9 +11,9 @@ stages:
   - job: 'Build'
     displayName: 'Build job'
     pool: default
-     # vmImage: 'ubuntu-20.04'
-     # demands:
-     # - npm
+      #vmImage: 'ubuntu-20.04'
+      #demands:
+      #- npm
 
     variables:
       wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
@@ -64,3 +64,26 @@ stages:
 
     - publish: '$(Build.ArtifactStagingDirectory)'
       artifact: drop
+
+- stage: 'Deploy'
+  displayName: 'Deploy the web application'
+  dependsOn: Build
+  jobs:
+  - deployment: Deploy
+    pool: default
+      #vmImage: 'ubuntu-20.04'
+    environment: desarrollo
+    variables:
+    - group: Release
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          - task: AzureWebApp@1
+            displayName: 'Azure App Service Deploy: website'
+            inputs:
+              azureSubscription: 'Resource Manager - Tailspin - Space Game'
+              appName: '$(WebAppName)'
+              package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
